@@ -1,4 +1,4 @@
-/*!
+/*! 
  * RaphMap 0.1 - Google Maps Vector Overlay - Based Raphael JavaScript Vector Library
  * by Dmitry Baranovskiy (http://raphaeljs.com/)
  *
