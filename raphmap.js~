@@ -27,7 +27,7 @@ RaphMap = (function() {
     proto = "prototype",
     _limit = 50,
     
-    RM = function(container) {
+    RM = function(container) {console.log(container);
         _container = container;
         _containerWidth = _container.offsetWidth;
         _containerHeight = _container.offsetHeight;
