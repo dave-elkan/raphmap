@@ -204,12 +204,19 @@ RaphMap = (function() {
     Element[proto].draw = function() {
         throw ("You must implement the RaphMaps.Element#draw function");
     };
-    Element[proto].redraw = function() {
-        throw ("You must implement the RaphMaps.Element#redraw function");
+    Element[proto].redraw = function(coords) {
+        this.points.attr({
+            cx: coords.x,
+            cy: coords.y
+        });
     };
     Element[proto].isOutside = function(isOutside) {
-        throw ("You must implement the RaphMaps.Element#isOutside function");
-    }
+        if ((isOutside && !this.elementIsOutside) || (!isOutside && this.elementIsOutside)) {
+            this.elementIsOutside = isOutside;
+            var outsideEvent = "element" + ((isOutside) ? "Out" : "In") + "side";
+            //this.trigger(outsideEvent, this.tweet.id);
+        }
+    };
     Element[proto].toString = function() {
         return "Raphmap.Element " + this.latLong;
     };

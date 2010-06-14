@@ -1,8 +1,0 @@
-G_MAP_MAP_PANE = document.getElementbyId("");
-GMap2 = function() {
-
-};
-
-GLatLng = function() {
-
-};
