@@ -15,15 +15,11 @@ RaphMap = (function() {
     _paper,
     _elements = [],
     _shapes,
-    _dragging = false,
-    _xPos,
-    _yPos,
     _xOffset,
     _yOffset,
     _container,
     _containerWidth,
     _containerHeight,
-    _draggable = true,
     proto = "prototype",
     _limit = 50,
     
@@ -31,71 +27,23 @@ RaphMap = (function() {
         _container = container;
         _containerWidth = _container.offsetWidth;
         _containerHeight = _container.offsetHeight;
+        this.dragging = false;
+        this.draggable = true;
     };
-    RM[proto] = new GOverlay;
-
-    function _createWrapperElement() {
-        var div = document.createElement("div");
-        div.style.position = "absolute";
-        div.style.left = 0;
-        div.style.top = 0;
-        div.onmousedown = _dragOverlayMouseDown;
-        if (_gMap.doubleClickZoomEnabled()) {
-            div.ondblclick = _zoomIn;
-        }
-
-        return div;
-    }
-    
-    function _dragOverlayMouseDown(e) {
-        if (_draggable) {
-            _xPos = e.layerX;
-            _yPos = e.layerY;
-            _dragging = true;
-        }
-    }
-
-    function _initOverlayDrag() {
-        document.onmousemove = function(e) {
-            e = e || window.event;
-            if (_dragging) {
-                _dragOverlay(e);
-            }
-        }
-
-        document.onmouseup = function() {
-            _dragging = false
-        }
-    }
+    RM[proto] = new google.maps.OverlayView();
 
     function _zoomIn(event) {
         _gMap.zoomIn(_getLatLngFromEvent(event), true);
     }
 
     function _getLatLngFromEvent(event) {
-        return _gMap.fromDivPixelToLatLng(new GPoint(event.layerX - _xOffset, event.layerY - _yOffset));
-    }
-
-    function _dragOverlay(e) {
-        var
-        _moveX = -1 * (_xPos - e.layerX),
-        _moveY = -1 * (_yPos - e.layerY),
-        gMapDragger = _gMap.getDragObject(),
-        gMapSize = new GSize(_moveX, _moveY);
-    
-        gMapDragger.moveBy(gMapSize);
-        _xPos = e.layerX;
-        _yPos = e.layerY;
-        _xOffset += _moveX;
-        _yOffset += _moveY;
-        _shapes.translate(_moveX, _moveY);
-        _hideAndShowOutOfBounds();
+        return _gMap.fromDivPixelToLatLng(new google.maps.Point(event.layerX - _xOffset, event.layerY - _yOffset));
     }
 
     function _getCoordsForLatLong(latlong) {
         if (latlong) {
-            var coords = _gMap.fromLatLngToDivPixel(latlong);
-            return _getCoordsWithOffset(coords);
+/*            var coords = _gMap.fromLatLngToDivPixel(latlong);
+            return _getCoordsWithOffset(coords);*/
         }
     }
 
@@ -123,24 +71,105 @@ RaphMap = (function() {
         return ((x < 0 || x > _containerWidth) || (y < 0 || y > _containerHeight));
     }
 
-    RM[proto].initialize = function(gMap) {
-        _gMap = gMap;
-        var pane = _gMap.getPane(G_MAP_MAP_PANE).parentNode.parentNode;
-        _wrapper = _createWrapperElement();
-        pane.appendChild(_wrapper);
+    RM[proto].initialise = function(gMap) {
+        _gMap = gMap
+        var 
+        _element = this.createWrapperElement(),
         _paper = Raphael(
-            _wrapper,
+            _element,
             _containerWidth,
             _containerHeight
         );
+        gMap.controls[google.maps.ControlPosition.TOP].push(_element);
+        this.setMap(gMap);
         _shapes = _paper.set();
         _xOffset = 0;
         _yOffset = 0;
-    
-        GEvent.addListener(_gMap, "zoomend", _hideAndShowOutOfBounds);
-
-        _initOverlayDrag();
+        
+        google.maps.event.addListener(gMap, 'click', function(mEvent) {
+          console.log('clicked');
+        });
+        
+        window.onmousemove = function(e) {
+            var evt = document.createEvent("MouseEvents");
+            evt.initMouseEvent("click", false, true, window, 0, e.screenX, e.screenY, e.clientX, e.clientY, false, false, false, false, e.button, null);
+            _element.dispatchEvent(evt);
+        };
+        //GEvent.addListener(_gMap, "zoomend", _hideAndShowOutOfBounds);
+        this.initOverlayDrag();
     }
+    
+    RM[proto].simulateClick = function(parent) {
+
+    }
+    
+    RM[proto].dragOverlayMouseDown = function(e) {
+        if (this.draggable) {
+            this.xPos = e.layerX;
+            this.yPos = e.layerY;
+            this.dragging = true;
+        }
+    }
+
+    RM[proto].createWrapperElement = function() {
+        var
+        self = this,
+        div = document.createElement("div");
+        div.style.position = "absolute";
+        div.style.left = 0;
+        div.style.top = 0;
+        div.onmousedown = function(e) {
+            self.dragOverlayMouseDown(e);
+        }
+/*        if (_gMap.doubleClickZoomEnabled()) {
+            div.ondblclick = _zoomIn;
+        }*/
+
+        return div;
+    };
+    
+    RM[proto].initOverlayDrag = function() {
+        var self = this;
+        console.log(this)
+        document.onmousemove = function(e) {
+            e = e || window.event;
+            if (self.dragging) {
+                self.drag(e);
+            }
+        }
+
+        document.onmouseup = function() {
+            self.dragging = false
+        }
+    };
+    
+    RM[proto].drag = function(e) {
+        
+        var
+        _moveX = (this.xPos - e.layerX),
+        _moveY = (this.yPos - e.layerY),
+        projection = this.getProjection(),
+        currentCenter = _gMap.getCenter(),
+        // Get center as pixels
+        centerPoint = projection.fromLatLngToDivPixel(currentCenter);
+        // Add move onto center pixels
+        centerPoint.x += _moveX;
+        centerPoint.y += _moveY;
+        // tranlate center pixels to latlng
+        var newCenter = projection.fromDivPixelToLatLng(centerPoint);
+        _gMap.setCenter(newCenter);
+    
+      //  gMapDragger.moveBy(gMapSize);
+        this.xPos = e.layerX;
+        this.yPos = e.layerY;
+        _xOffset += _moveX;
+        _yOffset += _moveY;
+    /*    _shapes.translate(_moveX, _moveY);
+        _hideAndShowOutOfBounds();*/
+    }
+
+    RM[proto].draw = function() {
+    };
 
     RM[proto].addElement = function(element) {
         var coords = _getCoordsForLatLong(element.getLatLong()),
@@ -174,7 +203,7 @@ RaphMap = (function() {
     }
 
     RM[proto].isDragging = function() {
-        return _dragging;
+        return this.dragging;
     }
 
     RM[proto].width = function() {
@@ -186,7 +215,7 @@ RaphMap = (function() {
     }
     
     RM[proto].setDraggable = function(draggable) {
-        _draggable = draggable;
+        this.draggable = draggable;
     }
     
     function copyRaphaelElementPrototype() {

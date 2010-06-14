@@ -2,19 +2,26 @@
     var
     
     element = document.getElementById("raphmap"),
-    raphmap = new RaphMap(element),
-    gMap = new GMap2(element);
+    raphmap = new RaphMap(element)/*,
+    gMap = new google.maps.Map(element)*/;
 
-    gMap.setCenter(new GLatLng(-28, 135), 3);
-    gMap.setUI(getDefaultUI(gMap));
-    gMap.addOverlay(raphmap);
+    var centerLatLng = new google.maps.LatLng(37.748582,-122.418411);
+    var gMap = new google.maps.Map(document.getElementById('raphmap'), {
+      'zoom': 3,
+      'center': centerLatLng,
+      'mapTypeId': google.maps.MapTypeId.ROADMAP
+    });
+
+
+    gMap.setCenter(new google.maps.LatLng(-28, 135), 3);
+    raphmap.initialise(gMap);
     
-    var point = new SimplePoint(new GLatLng(-34, 151));
+    var point = new SimplePoint(new google.maps.LatLng(-34, 151));
     
     raphmap.addElement(point);
 
     function getDefaultUI(gMap) {
-        var customUI = gMap.getDefaultUI();
+        var customUI = {controls: {},zoom:{}};//gMap.getDefaultUI();
         customUI.controls.scalecontrol = false;
         customUI.controls.largemapcontrol3d  = false;
         customUI.controls.maptypecontrol = false;
