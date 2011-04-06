@@ -1,22 +1,14 @@
 (function() {
-    var
-    
-    element = document.getElementById("raphmap"),
-    raphmap = new RaphMap(element)/*,
-    gMap = new google.maps.Map(element)*/;
 
-    var centerLatLng = new google.maps.LatLng(37.748582,-122.418411);
-    var gMap = new google.maps.Map(document.getElementById('raphmap'), {
-      'zoom': 3,
-      'center': centerLatLng,
-      'mapTypeId': google.maps.MapTypeId.ROADMAP
-    });
-
-
-    gMap.setCenter(new google.maps.LatLng(-28, 135), 3);
-    raphmap.initialise(gMap);
-    
-    var point = new SimplePoint(new google.maps.LatLng(-34, 151));
+    var centerLatLng = new google.maps.LatLng(-24.1,133.5),
+        element = document.getElementById("raphmap"),
+        gMap = new google.maps.Map(element, {
+          zoom: 3,
+          center: centerLatLng,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        }),
+        raphmap = new RaphMap(element, gMap),
+        point = new SimplePoint(new google.maps.LatLng(-24.1,133.5));
     
     raphmap.addElement(point);
 
